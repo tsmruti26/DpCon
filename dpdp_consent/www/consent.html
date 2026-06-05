@@ -1,0 +1,95 @@
+<h1>DPDP Consent Portal</h1>
+
+<form id="consent-form">
+
+    <label>User Name</label>
+    <input type="text" id="username">
+
+    <br><br>
+
+    <label>Purpose</label>
+    <input type="text" id="purpose">
+
+    <br><br>
+
+    <label>Consent For</label>
+
+    <select id="consent_for">
+        <option value="Self">Self</option>
+        <option value="Child">Child</option>
+    </select>
+
+    <br><br>
+
+    <div id="dependant-section" style="display:none;">
+
+        <label>Dependant Details</label>
+
+        <select id="dependant_details">
+            <option value="Parent">Parent</option>
+            <option value="Sibling">Sibling</option>
+            <option value="Guardian">Guardian</option>
+        </select>
+
+    </div>
+
+    <br>
+
+    <label>Decision</label>
+
+    <select id="decision">
+        <option value="Approve">Approve</option>
+        <option value="Deny">Deny</option>
+    </select>
+
+    <br><br>
+
+    <button type="button" onclick="submitConsent()">
+        Submit Consent
+    </button>
+
+</form>
+
+<script>
+
+document.getElementById("consent_for").addEventListener("change", function() {
+
+    if(this.value === "Child") {
+        document.getElementById("dependant-section").style.display = "block";
+    } else {
+        document.getElementById("dependant-section").style.display = "none";
+    }
+
+});
+
+async function submitConsent() {
+
+    let data = {
+        username: document.getElementById("username").value,
+        purpose: document.getElementById("purpose").value,
+        consent_for: document.getElementById("consent_for").value,
+        dependant_details: document.getElementById("dependant_details").value,
+        decision: document.getElementById("decision").value
+    };
+
+    let response = await fetch('/api/method/dpdp_consent.api.create_consent', {
+
+        method: 'POST',
+
+        headers: {
+            'Content-Type': 'application/json'
+        },
+
+        body: JSON.stringify(data)
+
+    });
+
+    let result = await response.json();
+
+    alert("Consent Saved");
+
+    console.log(result);
+
+}
+
+</script>

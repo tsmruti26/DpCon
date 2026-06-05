@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DPDP Consent Portal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 520px;
+      padding: 40px;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .logo h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a202c;
+    }
+
+    .logo p {
+      font-size: 13px;
+      color: #718096;
+      margin-top: 4px;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    h2 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #4a5568;
+      margin-bottom: 6px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #2d3748;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #4299e1;
+    }
+
+    textarea { resize: none; height: 80px; }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: #4299e1; color: white; }
+    .btn-primary:hover:not(:disabled) { background: #3182ce; }
+    .btn-approve { background: #48bb78; color: white; margin-bottom: 10px; }
+    .btn-approve:hover:not(:disabled) { background: #38a169; }
+    .btn-deny { background: #fc8181; color: white; }
+    .btn-deny:hover:not(:disabled) { background: #f56565; }
+    .btn-secondary { background: #edf2f7; color: #4a5568; }
+    .btn-secondary:hover { background: #e2e8f0; }
+
+    .purpose-box {
+      background: #ebf8ff;
+      border: 1.5px solid #bee3f8;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: #2c5282;
+    }
+
+    .purpose-box strong { display: block; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .token-badge {
+      background: #f0fff4;
+      border: 1.5px solid #9ae6b4;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      color: #276749;
+    }
+
+    .progress-steps {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      position: relative;
+    }
+
+    .progress-steps::before {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: 0; right: 0;
+      height: 2px;
+      background: #e2e8f0;
+      z-index: 0;
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      z-index: 1;
+    }
+
+    .step-dot {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #a0aec0;
+      transition: all 0.3s;
+    }
+
+    .step-dot.active { background: #4299e1; color: white; }
+    .step-dot.done { background: #48bb78; color: white; }
+    .step-dot.error { background: #fc8181; color: white; }
+
+    .step span { font-size: 11px; color: #a0aec0; }
+
+    .result-icon {
+      text-align: center;
+      font-size: 56px;
+      margin-bottom: 16px;
+    }
+
+    .result-title {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .result-sub {
+      text-align: center;
+      font-size: 14px;
+      color: #718096;
+      margin-bottom: 24px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f4f8;
+      font-size: 14px;
+    }
+
+    .info-row span:first-child { color: #718096; }
+    .info-row span:last-child { font-weight: 600; color: #2d3748; word-break: break-all; text-align: right; max-width: 60%; }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .alert-error { background: #fff5f5; border: 1.5px solid #fed7d7; color: #c53030; }
+    .alert-warning { background: #fffaf0; border: 1.5px solid #fbd38d; color: #c05621; }
+
+    .divider { border: none; border-top: 1px solid #e2e8f0; margin: 24px 0; }
+
+    .verify-section h3 { font-size: 15px; font-weight: 600; color: #2d3748; margin-bottom: 12px; }
+
+    #verifyResult { margin-top: 12px; display: none; }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <div class="logo">
+    <h1>🔐 DPDP Consent Portal</h1>
+    <p>Digital Personal Data Protection</p>
+  </div>
+
+  <!-- SCREEN 1: Identity -->
+  <div class="screen active" id="screen_identity">
+    <h2>Step 1 — Your Details</h2>
+    <label>Full Name</label>
+    <input type="text" id="fullName" placeholder="Enter your full name" />
+    <label>Email / Identifier</label>
+    <input type="email" id="userIdentifier" placeholder="Enter your email" />
+    <label>Consent For</label>
+    <select id="identityType">
+      <option value="Self">Self</option>
+      <option value="Child">Child</option>
+    </select>
+    <div id="dependentSection" style="display:none;">
+      <label>Dependent's Name</label>
+      <input type="text" id="dependentName" placeholder="Enter dependent's name" />
+    </div>
+    <button class="btn btn-primary" onclick="continueToSession()">Continue →</button>
+  </div>
+
+  <!-- SCREEN 2: Checking Session -->
+  <div class="screen" id="screen_checking">
+    <h2>Checking your session...</h2>
+    <p style="color:#718096; font-size:14px;">Please wait while we verify your details.</p>
+  </div>
+
+  <!-- SCREEN 3: Already Consented -->
+  <div class="screen" id="screen_duplicate">
+    <div class="result-icon">⚠️</div>
+    <div class="result-title">Already Processed</div>
+    <div class="result-sub">You have already completed this consent process.</div>
+    <div id="duplicateStatus" class="alert alert-warning"></div>
+    <button class="btn btn-secondary" onclick="resetApp()">Start Over</button>
+  </div>
+
+  <!-- SCREEN 4: Consent Form -->
+  <div class="screen" id="screen_consent">
+    <div class="progress-steps">
+      <div class="step"><div class="step-dot done" id="dot1">✓</div><span>Identity</span></div>
+      <div class="step"><div class="step-dot done" id="dot2">✓</div><span>Session</span></div>
+      <div class="step"><div class="step-dot active" id="dot3">3</div><span>Consent</span></div>
+      <div class="step"><div class="step-dot" id="dot4">4</div><span>Done</span></div>
+    </div>
+    <div class="purpose-box">
+      <strong>Purpose of Data Collection</strong>
+      <span id="purposeDisplay"></span>
+    </div>
+    <div class="token-badge">🔒 A secure session token has been generated for this submission.</div>
+    <label>Purpose / Details (confirm or add notes)</label>
+    <textarea id="purposeInput" placeholder="Describe the purpose..."></textarea>
+    <button class="btn btn-approve" onclick="submitConsent('Approve')">✅ Approve Consent</button>
+    <button class="btn btn-deny" onclick="submitConsent('Deny')">❌ Deny Consent</button>
+  </div>
+
+  <!-- SCREEN 5: Submitting -->
+  <div class="screen" id="screen_submitting">
+    <div class="progress-steps">
+      <div class="step"><div class="step-dot done">✓</div><span>Identity</span></div>
+      <div class="step"><div class="step-dot done">✓</div><span>Session</span></div>
+      <div class="step"><div class="step-dot active" id="submitDot3">3</div><span>Saving</span></div>
+      <div class="step"><div class="step-dot" id="submitDot4">4</div><span>Done</span></div>
+    </div>
+    <p style="text-align:center; color:#718096; font-size:14px; margin-top:12px;">Submitting your decision...</p>
+  </div>
+
+  <!-- SCREEN 6: Approved -->
+  <div class="screen" id="screen_approved">
+    <div class="result-icon">✅</div>
+    <div class="result-title" style="color:#276749;">Consent Approved</div>
+    <div class="result-sub">Your consent has been recorded successfully.</div>
+    <div class="info-row"><span>Name</span><span id="approvedName"></span></div>
+    <div class="info-row"><span>Purpose</span><span id="approvedPurpose"></span></div>
+    <div class="info-row"><span>Consent ID</span><span id="approvedConsentId"></span></div>
+    <div class="info-row"><span>Artefact Token</span><span id="approvedArtefactToken"></span></div>
+    <p style="font-size:12px; color:#718096; margin-top:16px; margin-bottom:20px;">Save your Artefact Token — it is your proof of consent.</p>
+    <button class="btn btn-secondary" onclick="resetApp()">Done</button>
+  </div>
+
+  <!-- SCREEN 7: Denied -->
+  <div class="screen" id="screen_denied">
+    <div class="result-icon">🚫</div>
+    <div class="result-title" style="color:#c53030;">Consent Denied</div>
+    <div class="result-sub">Your denial has been recorded.</div>
+    <div class="info-row"><span>Consent ID</span><span id="deniedConsentId"></span></div>
+    <button class="btn btn-secondary" style="margin-top:24px;" onclick="resetApp()">Done</button>
+  </div>
+
+  <!-- SCREEN 8: Error -->
+  <div class="screen" id="screen_error">
+    <div class="result-icon">❌</div>
+    <div class="result-title" style="color:#c53030;">Something went wrong</div>
+    <div id="errorMsg" class="alert alert-error" style="margin-top:16px;"></div>
+    <button class="btn btn-secondary" onclick="resetApp()">Try Again</button>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Verify Section (always visible) -->
+  <div class="verify-section">
+    <h3>🔍 Verify an Artefact Token</h3>
+    <input type="text" id="verifyToken" placeholder="Paste artefact token here" />
+    <button class="btn btn-primary" onclick="verifyArtefact()">Verify</button>
+    <div id="verifyResult"></div>
+  </div>
+
+</div>
+
+<script>
+  const API = "http://localhost:8000";
+  const PURPOSE = "Account Verification and Data Processing";
+
+  let stateToken  = null;
+  let userIdentifier = null;
+  let fullName    = null;
+  let identityType = null;
+  let dependentName = null;
+
+  // Show/hide dependent name field
+  document.getElementById("identityType").addEventListener("change", function() {
+    document.getElementById("dependentSection").style.display =
+      this.value === "Child" ? "block" : "none";
+  });
+
+  function showScreen(id) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  }
+
+  function showError(msg) {
+    document.getElementById("errorMsg").textContent = msg;
+    showScreen("screen_error");
+  }
+
+  async function continueToSession() {
+    fullName      = document.getElementById("fullName").value.trim();
+    userIdentifier = document.getElementById("userIdentifier").value.trim();
+    identityType  = document.getElementById("identityType").value;
+    dependentName = document.getElementById("dependentName").value.trim();
+
+    if (!fullName || !userIdentifier) {
+      alert("Please fill in your name and email.");
+      return;
+    }
+
+    showScreen("screen_checking");
+
+    try {
+      const r = await fetch(
+        `${API}/api/method/dpdp_consent.dpdp_consent.api.check_session?user_identifier=${encodeURIComponent(userIdentifier)}&purpose=${encodeURIComponent(PURPOSE)}`
+      );
+      const data = await r.json();
+      const result = data.message;
+
+      if (result.already_consented) {
+        document.getElementById("duplicateStatus").textContent =
+          "Previous status: " + result.existing_status;
+        showScreen("screen_duplicate");
+        return;
+      }
+
+      // Get state token
+      const r2 = await fetch(
+        `${API}/api/method/dpdp_consent.dpdp_consent.api.initiate_consent?user_identifier=${encodeURIComponent(userIdentifier)}&purpose=${encodeURIComponent(PURPOSE)}`
+      );
+      const data2 = await r2.json();
+      stateToken = data2.message.state_token;
+
+      document.getElementById("purposeDisplay").textContent = PURPOSE;
+      document.getElementById("purposeInput").value = PURPOSE;
+      showScreen("screen_consent");
+
+    } catch (err) {
+      showError("Could not connect to server. Make sure Frappe is running. Error: " + err.message);
+    }
+  }
+
+  async function submitConsent(decision) {
+    const purpose = document.getElementById("purposeInput").value.trim();
+    if (!purpose) { alert("Please enter a purpose."); return; }
+
+    showScreen("screen_submitting");
+
+    try {
+      const params = new URLSearchParams({
+        state_token:    stateToken,
+        user_name:      fullName,
+        purpose:        purpose,
+        decision:       decision,
+        identity_type:  identityType,
+        dependent_name: dependentName || ""
+      });
+
+      const r = await fetch(
+        `${API}/api/method/dpdp_consent.dpdp_consent.api.submit_consent`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: params
+        }
+      );
+
+      const data = await r.json();
+
+      if (data.exc) {
+        showError("Submission failed: " + extractError(data.exc));
+        return;
+      }
+
+      const result = data.message;
+
+      if (result.status === "Approved") {
+        document.getElementById("approvedName").textContent        = fullName;
+        document.getElementById("approvedPurpose").textContent     = purpose;
+        document.getElementById("approvedConsentId").textContent   = result.consent_id;
+        document.getElementById("approvedArtefactToken").textContent = result.artefact_token;
+        showScreen("screen_approved");
+      } else {
+        document.getElementById("deniedConsentId").textContent = result.consent_id;
+        showScreen("screen_denied");
+      }
+
+    } catch (err) {
+      showError("Network error: " + err.message);
+    }
+  }
+
+  async function verifyArtefact() {
+    const token = document.getElementById("verifyToken").value.trim();
+    if (!token) { alert("Please enter an artefact token."); return; }
+
+    const box = document.getElementById("verifyResult");
+    box.style.display = "block";
+    box.textContent = "Verifying...";
+
+    try {
+      const r = await fetch(
+        `${API}/api/method/dpdp_consent.dpdp_consent.api.verify_artefact?artefact_token=${encodeURIComponent(token)}`
+      );
+      const data = await r.json();
+      const result = data.message;
+
+      if (result.valid) {
+        box.className = "alert";
+        box.style.background = "#f0fff4";
+        box.style.border = "1.5px solid #9ae6b4";
+        box.style.color = "#276749";
+        box.innerHTML = `
+          ✅ <strong>Valid Artefact</strong><br/>
+          Purpose: ${result.purpose}<br/>
+          Consented At: ${result.consented_at}<br/>
+          Status: <strong>${result.status}</strong>
+        `;
+      } else {
+        box.className = "alert alert-error";
+        box.textContent = "❌ " + result.message;
+      }
+    } catch (err) {
+      box.className = "alert alert-error";
+      box.textContent = "Could not verify. Error: " + err.message;
+    }
+  }
+
+  function resetApp() {
+    stateToken = null; userIdentifier = null;
+    fullName = null; identityType = null; dependentName = null;
+    document.getElementById("fullName").value = "";
+    document.getElementById("userIdentifier").value = "";
+    document.getElementById("identityType").value = "Self";
+    document.getElementById("dependentSection").style.display = "none";
+    document.getElementById("purposeInput").value = "";
+    document.getElementById("verifyToken").value = "";
+    document.getElementById("verifyResult").style.display = "none";
+    showScreen("screen_identity");
+  }
+
+  function extractError(exc) {
+    try {
+      const lines = JSON.parse(exc);
+      return lines[lines.length - 1] || exc;
+    } catch { return exc; }
+  }
+</script>
+</body>
+</html>
