@@ -30,8 +30,3 @@ A **production-ready consent management system** for India's DPDP Act compliance
 | Tracking | Timeline + approval status | Audit-ready |
 | Dashboard | Real-time statistics | Business intelligence |
 | Retention | Expiry dates | DPDP compliance |
-
-## 🔧 API Endpoint
-
-```http
-GET /api/method/dpdp_consent.dpdp_consent.doctype.consent_request.consent_request.get_consent_records
