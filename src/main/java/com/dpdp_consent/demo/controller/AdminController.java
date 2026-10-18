@@ -1,38 +1,61 @@
 package com.dpdp_consent.demo.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
 import com.dpdp_consent.demo.model.Admin;
 import com.dpdp_consent.demo.repository.AdminRepository;
+import com.dpdp_consent.demo.security.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+
 import java.util.Map;
-import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/admin")
-@CrossOrigin(origins = "http://localhost:8080")
 public class AdminController {
 
     @Autowired
- private AdminRepository adminRepository;
+    private AdminRepository adminRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @PostMapping("/login")
-    public Map<String, Object> login(@RequestBody Map<String, String> credentials) {
+    public ResponseEntity<Map<String, Object>> login(
+            @RequestBody Map<String, String> credentials) {
+
         String username = credentials.get("username");
         String password = credentials.get("password");
-        
-        Admin admin = adminRepository.findByUsername(username);
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        if (admin != null && admin.getPassword().equals(password)) {
-            response.put("success", true);
-            response.put("message", "Login successful");
-            response.put("adminId", admin.getId());
-        } else {
-            response.put("success", false);
-            response.put("message", "Invalid credentials");
+
+        if (username == null || password == null) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Username and password are required"
+            ));
         }
-        
-        return response;
+
+        Admin admin = adminRepository.findByUsername(username);
+
+        if (admin == null ||
+                !passwordEncoder.matches(password, admin.getPassword())) {
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "Invalid credentials"
+            ));
+        }
+
+        String token = jwtUtil.createAdminToken(admin.getUsername());
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Login successful",
+                "token", token,
+                "adminId", admin.getId()
+        ));
     }
 }

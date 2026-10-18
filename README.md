@@ -1,173 +1,67 @@
-# 🔐 DPDP Consent Management System (Aadhaar OTP Verified)
+# DpCon
 
-A full-stack **DPDP-inspired Consent Management System** built using **Spring Boot + HTML/CSS/JavaScript + MySQL**, now upgraded with **Aadhaar OTP-based identity verification** before consent submission.
+DpCon is a DPDP-inspired privacy and consent platform. The React dashboard talks to a Spring Boot API; the API proxies policy analysis and public policy page extraction to a Python FastAPI service.
 
----
+## Features
 
-## 🚀 Latest Upgrade (NEW FEATURES)
+- Account registration and login with BCrypt passwords, JWT authentication, optional TOTP MFA, and per-user consent records.
+- Consent inventory, privacy score, consent withdrawal, and account erasure that removes linked consent records.
+- Versioned JSON privacy passport export/import.
+- Policy text analysis and public URL discovery. Groq is optional: the AI service uses a local keyword-based fallback when no key is configured or the provider is unavailable.
+- Docker Compose stack with PostgreSQL persistence for a one-command local start.
+- Security controls: BCrypt cost 12, 15-minute JWTs, throttled authentication and AI calls, browser security headers, bounded AI payloads, and a private AI service authenticated with an internal token.
 
-### 🔥 Aadhaar OTP Authentication Added
-- 12-digit Aadhaar validation
-- 6-digit random OTP generation
-- OTP verification before accessing consent form
-- Session-based identity locking
+Automated policy analysis is an informational summary, not legal advice. The local fallback is heuristic-based and labels its source in the result.
 
-### 🔐 Secure Consent Flow
-- Consent form is locked until OTP verification
-- Verified identity auto-filled (no manual name entry)
-- Aadhaar linked to every consent record
+## Run with Docker Compose
 
-### 🧠 Improved UX Flow
-- Step-by-step onboarding (Auth → OTP → Consent)
-- Cleaner UI transitions
-- Prevents direct access to consent form without verification
+1. Copy `.env.example` to `.env` and generate unique random values for `JWT_SECRET` (at least 32 bytes), `AI_SERVICE_TOKEN` (at least 32 characters), and `POSTGRES_PASSWORD`. In PowerShell, run `[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(48))` three times, then put a different output in each secret field. Add `GROQ_API_KEY` to enable live Groq analysis; leaving it empty uses offline analysis. `GROQ_MODEL` can select any model enabled for your Groq account.
+2. Run `docker compose up --build` from the repository root.
+3. Open the frontend at `http://localhost:5173`. The backend API is on port 8080; the AI service is private to the Docker network and is not published to the host.
 
----
+PostgreSQL data is stored in the `postgres_data` volume. To stop the services and retain data, run `docker compose down`. Removing the volume permanently deletes the local database.
 
-## 🔄 System Flow (Updated)
-Aadhaar Input
-↓
-OTP Generation (Backend)
-↓
-OTP Verification
-↓
-Identity Verified (Session Stored)
-↓
-Consent Form Unlocked
-↓
-Consent Submitted
-↓
-Stored in Database
-↓
-Admin Dashboard Review
+## Run locally on Windows
 
----
+Run `powershell -ExecutionPolicy Bypass -File .\start-local.ps1` from the repository root. This starts the AI service on
+port 8001 and the backend on port 8080 with matching local secrets saved in the Git-ignored `.local-secrets.json`.
+The standalone backend uses a local H2 file database so accounts survive backend restarts; the first run after switching
+from in-memory H2 requires creating the account again.
+The script does not change the required-secret configuration used by Docker or production. Delete that local file only
+to rotate the development secrets; doing so signs out existing browser sessions.
 
-## 🧩 Features
+## Run services separately
 
-### 🔐 Authentication Module (NEW)
-- Aadhaar number validation (12-digit check)
-- Random 6-digit OTP generation
-- OTP verification API
-- Session-based Aadhaar storage
-- One-time OTP usage (auto clear after success)
+Start the backend from the repository root:
 
-### 📄 Consent Management
-- User consent capture (Self / Child / Dependant)
-- Purpose-based data processing description
-- Approval / Denial selection
-- Aadhaar-linked consent records
+```powershell
+./mvnw spring-boot:run
+```
 
-### 📊 Admin Dashboard
-- View all consent requests
-- Track status: Pending / Approved / Rejected
-- Update consent status manually
-- Real-time statistics API
+Start the AI service from `ai-service` (Python 3.10+):
 
----
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe main.py
+```
 
-## 🛠️ Tech Stack
+Start the frontend from `privacy-pocket` (Node.js):
 
-### Frontend
-- HTML5
-- CSS3
-- JavaScript (Fetch API)
+```powershell
+npm ci
+npm run dev
+```
 
-### Backend
-- Java 17+
-- Spring Boot
-- Spring Web
-- Spring Data JPA
+The local backend and AI service bind to loopback by default. Before running them separately, set the same random `AI_SERVICE_TOKEN` in both environments and set a random `JWT_SECRET` of at least 32 bytes for the backend. Set `GROQ_API_KEY` in the AI service environment to enable live analysis. The AI service supports `AI_MOCK_MODE=true` to force offline mode and `AI_MOCK_MODE=false` to require a working provider. Use HTTPS through a trusted reverse proxy before exposing the app to the public internet; the included Compose setup is for local development and does not configure TLS.
 
-### Database
-- MySQL
+## Main API routes
 
----
+- `POST /api/auth/register`, `POST /api/auth/login`
+- `GET /api/wallet/inventory`, `GET /api/wallet/score`
+- `POST /api/wallet/add`, `POST /api/wallet/withdraw/{id}`
+- `GET /api/wallet/passport`, `POST /api/wallet/passport`, `DELETE /api/wallet/account`
+- `POST /api/ai/analyze-policy`, `POST /api/ai/analyze-url`
+- AI service health is available only on the private Compose network.
 
-## 📁 Project Structure (Updated)
-│
-├── controller
-│ ├── ConsentController.java
-│ ├── AdminController.java
-│ └── OtpController.java (NEW)
-│
-├── model
-│ └── ConsentRequest.java
-│
-├── repository
-│ └── ConsentRepository.java
-│
-└── DemoApplication.java
-
-src/main/resources/static
-│
-├── index.html (OTP + Consent UI)
-└── dashboard.html
-
----
-
-## 🔐 OTP Workflow Logic (NEW)
-
-1. User enters Aadhaar number
-2. Backend generates 6-digit OTP
-3. OTP stored temporarily in memory (Map)
-4. User enters OTP
-5. Backend validates OTP
-6. On success:
-   - Aadhaar stored in sessionStorage
-   - Consent form unlocked
-   - Identity marked as verified
-
----
-
-## 📡 API Endpoints (UPDATED)
-
-### 🔐 OTP APIs (NEW)
-POST /api/generate-otp?aadhaar=XXXXXXXXXXXX
-POST /api/verify-otp?aadhaar=XXXXXXXXXXXX&otp=XXXXXX
-
-
----
-
-### 📄 Consent APIs
-POST /api/create_consent
-GET /api/get_consents
-GET /api/dashboard
-POST /api/update_status
-
----
-
-### 👨‍💼 Admin API
-POST /api/admin/login
-
----
-
-## 🧪 Sample Consent Payload (Updated)
-
-```json
-{
-  "username": "Verified Aadhaar Holder (XXXX1234)",
-  "aadhaar": "123456789012",
-  "consentFor": "Self",
-  "dependantDetails": "None",
-  "purpose": "Data processing for service usage under DPDP Act",
-  "decision": "Approve"
-}
-``` id="payload_updated"
-
----
-
-## 🔐 Security Improvements (NEW)
-
-- OTP-based identity verification
-- Session-based access control
-- Prevents direct access to consent form
-- One-time OTP usage
-- Aadhaar masking in UI
-
----
-
-## ⚙️ How to Run
-
-mvn clean install
-mvn spring-boot:run
+The URL fetcher accepts public HTTP(S) pages only, does not follow redirects, and caps downloaded page size. Keep secrets in environment variables and restrict origins before exposing services publicly.
