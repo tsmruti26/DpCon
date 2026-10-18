@@ -1,0 +1,11 @@
+.git
+.env
+.env.*
+!.env.example
+target
+privacy-pocket/node_modules
+privacy-pocket/dist
+**/__pycache__
+**/.venv
+*.log
+*.pdf

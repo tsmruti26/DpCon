@@ -1,0 +1,6 @@
+fastapi>=0.115,<1
+uvicorn[standard]>=0.34,<1
+groq>=0.20,<1
+pydantic>=2.10,<3
+python-dotenv>=1,<2
+beautifulsoup4>=4.12,<5
